@@ -29,6 +29,7 @@ export default function TVPage() {
   const playerRef = useRef<any>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const applauseRef = useRef<HTMLAudioElement | null>(null);
+  const scoreInProgressRef = useRef(false);
 
   useEffect(() => {
     if (window.YT && window.YT.Player) {
@@ -51,7 +52,7 @@ export default function TVPage() {
   }, []);
 
   useEffect(() => {
-    if (!ytReady || !playerContainerRef.current) return;
+    if (!ytReady) return;
     
     if (!currentVideoId) {
       if (playerRef.current) {
@@ -63,11 +64,15 @@ export default function TVPage() {
       return;
     }
 
+    if (!playerContainerRef.current) return;
+
     if (playerRef.current) {
-      playerRef.current.loadVideoById(currentVideoId);
-      if (isPlaying) {
-        playerRef.current.playVideo();
-      }
+      try {
+        playerRef.current.loadVideoById(currentVideoId);
+        if (isPlaying) {
+          playerRef.current.playVideo();
+        }
+      } catch (e) {}
       return;
     }
 
@@ -181,16 +186,23 @@ export default function TVPage() {
   };
 
   const handlePlayPause = () => {
-    if (!wsRef.current) return;
-    wsRef.current.send(JSON.stringify({ type: isPlaying ? "pause" : "play" }));
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    try {
+      wsRef.current.send(JSON.stringify({ type: isPlaying ? "pause" : "play" }));
+    } catch (e) {}
   };
 
   const handleSkip = () => {
-    if (!wsRef.current) return;
-    wsRef.current.send(JSON.stringify({ type: "skip_song" }));
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    try {
+      wsRef.current.send(JSON.stringify({ type: "skip_song" }));
+    } catch (e) {}
   };
 
   const handleVideoEnd = () => {
+    if (scoreInProgressRef.current) return;
+    scoreInProgressRef.current = true;
+    
     const score = Math.floor(Math.random() * 51) + 50;
     setCurrentScore(score);
     setShowScore(true);
@@ -202,6 +214,7 @@ export default function TVPage() {
     
     setTimeout(() => {
       setShowScore(false);
+      scoreInProgressRef.current = false;
       handleSkip();
     }, 4000);
   };
@@ -217,7 +230,7 @@ export default function TVPage() {
 
   if (!room) {
     return (
-      <div className="dark min-h-screen bg-background flex items-center justify-center">
+      <div className="dark min-h-screen bg-black flex items-center justify-center">
         <Card className="p-8 max-w-md w-full mx-4 text-center">
           <Music className="w-16 h-16 mx-auto mb-6 text-primary" />
           <h1 className="text-3xl font-bold mb-4">Karaoke TV</h1>
@@ -239,7 +252,7 @@ export default function TVPage() {
   }
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground flex flex-col">
+    <div className="dark min-h-screen bg-black text-foreground flex flex-col">
       <audio
         ref={applauseRef}
         src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"
@@ -286,71 +299,69 @@ export default function TVPage() {
       </div>
 
       <div className="flex-1 flex flex-col">
-        {currentVideoId ? (
-          <div className="w-full px-4 pt-4">
-            <div
-              ref={playerContainerRef}
-              className="relative w-full"
-              style={{ paddingBottom: "56.25%" }}
-            >
-              <div
-                id="youtube-player"
-                className="absolute inset-0 w-full h-full rounded-lg overflow-hidden"
-                data-testid="video-player"
-              />
-            </div>
-            
-            <div
-              className="flex items-center justify-between mt-4 bg-card rounded-lg p-4 gap-4"
-              data-testid="playback-controls"
-            >
-              <div className="flex-1 min-w-0">
-                <p
-                  className="text-lg font-medium truncate"
-                  data-testid="text-current-song"
-                >
-                  {currentTitle || "Unknown Song"}
-                </p>
-                <p className="text-sm text-muted-foreground">Now Playing</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={handlePlayPause}
-                  data-testid="button-play-pause"
-                >
-                  {isPlaying ? (
-                    <Pause className="w-5 h-5" />
-                  ) : (
-                    <Play className="w-5 h-5" />
-                  )}
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={handleSkip}
-                  data-testid="button-skip"
-                >
-                  <SkipForward className="w-5 h-5" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        ) : (
+        <div className={`w-full px-4 pt-4 ${!currentVideoId ? 'hidden' : ''}`}>
           <div
-            className="flex-1 flex items-center justify-center"
-            data-testid="display-empty-state"
+            ref={playerContainerRef}
+            className="relative w-full"
+            style={{ paddingBottom: "56.25%" }}
           >
-            <div className="text-center p-12">
-              <Music className="w-24 h-24 mx-auto mb-6 text-muted-foreground opacity-50" />
-              <h2 className="text-3xl font-bold mb-4">No Songs in Queue</h2>
-              <p className="text-xl text-muted-foreground">
-                Scan the room code with your phone to add songs
+            <div
+              id="youtube-player"
+              className="absolute inset-0 w-full h-full rounded-lg overflow-hidden bg-black"
+              data-testid="video-player"
+            />
+          </div>
+          
+          <div
+            className="flex items-center justify-between mt-4 bg-card rounded-lg p-4 gap-4"
+            data-testid="playback-controls"
+          >
+            <div className="flex-1 min-w-0">
+              <p
+                className="text-lg font-medium truncate"
+                data-testid="text-current-song"
+              >
+                {currentTitle || "Unknown Song"}
               </p>
+              <p className="text-sm text-muted-foreground">Now Playing</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={handlePlayPause}
+                data-testid="button-play-pause"
+              >
+                {isPlaying ? (
+                  <Pause className="w-5 h-5" />
+                ) : (
+                  <Play className="w-5 h-5" />
+                )}
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={handleSkip}
+                data-testid="button-skip"
+              >
+                <SkipForward className="w-5 h-5" />
+              </Button>
             </div>
           </div>
-        )}
+        </div>
+        
+        <div
+          className={`flex-1 flex items-center justify-center ${currentVideoId ? 'hidden' : ''}`}
+          data-testid="display-empty-state"
+        >
+          <div className="text-center p-12">
+            <Music className="w-24 h-24 mx-auto mb-6 text-muted-foreground opacity-50" />
+            <h2 className="text-3xl font-bold mb-4">No Songs in Queue</h2>
+            <p className="text-xl text-muted-foreground">
+              Scan the room code with your phone to add songs
+            </p>
+          </div>
+        </div>
 
         <div className="border-t border-border bg-card mt-auto">
           <div className="flex items-center justify-between p-3 border-b border-border">
