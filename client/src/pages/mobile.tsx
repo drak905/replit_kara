@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Mic, Plus, Music, ListMusic, Loader2 } from "lucide-react";
+import { Search, Mic, Plus, Music, ListMusic, Loader2, Trash2 } from "lucide-react";
 import type { Room, QueueItem, VideoSearchResult } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -27,6 +27,7 @@ export default function MobilePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [addingVideoId, setAddingVideoId] = useState<string | null>(null);
+  const [removingItemId, setRemovingItemId] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [activeTab, setActiveTab] = useState("search");
 
@@ -159,6 +160,27 @@ export default function MobilePage() {
       });
     } finally {
       setAddingVideoId(null);
+    }
+  };
+
+  const handleRemoveFromQueue = async (itemId: string, title: string) => {
+    if (!room) return;
+
+    setRemovingItemId(itemId);
+    try {
+      await apiRequest("DELETE", `/api/rooms/${room.code}/queue/${itemId}`);
+      toast({
+        title: "Removed from Queue",
+        description: title,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to Remove",
+        description: "Could not remove song from queue",
+        variant: "destructive",
+      });
+    } finally {
+      setRemovingItemId(null);
     }
   };
 
@@ -468,6 +490,20 @@ export default function MobilePage() {
                         </p>
                       )}
                     </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleRemoveFromQueue(item.id, item.title)}
+                      disabled={removingItemId === item.id}
+                      data-testid={`button-remove-${item.id}`}
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
+                    >
+                      {removingItemId === item.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </Button>
                   </Card>
                 ))
               )}

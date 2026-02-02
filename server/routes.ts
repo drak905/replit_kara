@@ -309,9 +309,62 @@ export async function registerRoutes(
     }
   });
 
-  app.delete('/api/queue/:id', async (req, res) => {
+  app.delete('/api/rooms/:code/queue/:itemId', async (req, res) => {
     try {
-      await storage.removeFromQueue(req.params.id);
+      const room = await storage.getRoomByCode(req.params.code.toUpperCase());
+      if (!room) {
+        return res.status(404).json({ error: 'Room not found' });
+      }
+
+      const queue = await storage.getQueueByRoomId(room.id);
+      const itemToRemove = queue.find(item => item.id === req.params.itemId);
+      
+      if (!itemToRemove) {
+        return res.status(404).json({ error: 'Queue item not found' });
+      }
+
+      const wasPlaying = itemToRemove.status === 'playing';
+      
+      await storage.removeFromQueue(req.params.itemId);
+      
+      if (wasPlaying) {
+        const nextItem = await storage.getNextInQueue(room.id);
+        if (nextItem) {
+          await storage.updateQueueItem(nextItem.id, { status: 'playing' });
+          await storage.updateRoom(room.id, {
+            currentVideoId: nextItem.videoId,
+            currentVideoTitle: nextItem.title,
+            currentVideoThumbnail: nextItem.thumbnail,
+            isPlaying: true
+          });
+          broadcastToRoom(room.id, {
+            type: 'current_song',
+            videoId: nextItem.videoId,
+            title: nextItem.title,
+            thumbnail: nextItem.thumbnail
+          });
+          broadcastToRoom(room.id, { type: 'playback_state', isPlaying: true });
+        } else {
+          await storage.updateRoom(room.id, {
+            currentVideoId: null,
+            currentVideoTitle: null,
+            currentVideoThumbnail: null,
+            isPlaying: false
+          });
+          broadcastToRoom(room.id, {
+            type: 'current_song',
+            videoId: null,
+            title: null,
+            thumbnail: null
+          });
+          broadcastToRoom(room.id, { type: 'playback_state', isPlaying: false });
+        }
+      }
+
+      const updatedQueue = await storage.getQueueByRoomId(room.id);
+      broadcastToRoom(room.id, { type: 'song_removed', songId: req.params.itemId });
+      broadcastToRoom(room.id, { type: 'queue_updated', queue: updatedQueue });
+
       res.json({ success: true });
     } catch (error) {
       console.error('Error removing from queue:', error);
