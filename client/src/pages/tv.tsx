@@ -210,60 +210,43 @@ export default function TVPage() {
   }
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground flex">
-      <div className="flex-1 flex flex-col p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Music className="w-8 h-8 text-primary" />
-            <h1 className="text-2xl font-bold">Karaoke</h1>
-          </div>
-          <div
-            className="flex items-center gap-3 bg-card px-6 py-3 rounded-lg"
-            data-testid="display-room-code"
-          >
-            <Users className="w-6 h-6 text-muted-foreground" />
-            <span className="text-muted-foreground text-lg">Join:</span>
-            <span className="text-4xl font-bold tracking-wider text-primary">
-              {room.code}
-            </span>
-          </div>
+    <div className="dark min-h-screen bg-background text-foreground flex flex-col">
+      <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center gap-4">
+          <Music className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl font-bold">Karaoke</h1>
         </div>
+        <div
+          className="flex items-center gap-3 bg-card px-6 py-3 rounded-lg"
+          data-testid="display-room-code"
+        >
+          <Users className="w-6 h-6 text-muted-foreground" />
+          <span className="text-muted-foreground text-lg">Join:</span>
+          <span className="text-4xl font-bold tracking-wider text-primary">
+            {room.code}
+          </span>
+        </div>
+      </div>
 
-        <div className="flex-1 flex items-center justify-center">
-          {currentVideoId ? (
-            <div className="w-full max-w-5xl">
-              <div
-                ref={playerContainerRef}
-                className="relative w-full"
-                style={{ paddingBottom: "56.25%" }}
-              >
-                <div
-                  id="youtube-player"
-                  className="absolute inset-0 w-full h-full rounded-lg overflow-hidden"
-                  data-testid="video-player"
-                />
-              </div>
-            </div>
-          ) : (
+      <div className="flex-1 flex flex-col">
+        {currentVideoId ? (
+          <div className="w-full px-4 pt-4">
             <div
-              className="text-center p-12"
-              data-testid="display-empty-state"
+              ref={playerContainerRef}
+              className="relative w-full"
+              style={{ paddingBottom: "56.25%" }}
             >
-              <Music className="w-24 h-24 mx-auto mb-6 text-muted-foreground opacity-50" />
-              <h2 className="text-3xl font-bold mb-4">No Songs in Queue</h2>
-              <p className="text-xl text-muted-foreground">
-                Scan the room code with your phone to add songs
-              </p>
+              <div
+                id="youtube-player"
+                className="absolute inset-0 w-full h-full rounded-lg overflow-hidden"
+                data-testid="video-player"
+              />
             </div>
-          )}
-        </div>
-
-        {currentVideoId && (
-          <div
-            className="fixed bottom-0 left-0 right-80 bg-card/95 backdrop-blur border-t border-border p-4"
-            data-testid="playback-controls"
-          >
-            <div className="flex items-center justify-between max-w-5xl mx-auto gap-4">
+            
+            <div
+              className="flex items-center justify-between mt-4 bg-card rounded-lg p-4 gap-4"
+              data-testid="playback-controls"
+            >
               <div className="flex-1 min-w-0">
                 <p
                   className="text-lg font-medium truncate"
@@ -297,66 +280,79 @@ export default function TVPage() {
               </div>
             </div>
           </div>
+        ) : (
+          <div
+            className="flex-1 flex items-center justify-center"
+            data-testid="display-empty-state"
+          >
+            <div className="text-center p-12">
+              <Music className="w-24 h-24 mx-auto mb-6 text-muted-foreground opacity-50" />
+              <h2 className="text-3xl font-bold mb-4">No Songs in Queue</h2>
+              <p className="text-xl text-muted-foreground">
+                Scan the room code with your phone to add songs
+              </p>
+            </div>
+          </div>
         )}
-      </div>
 
-      <aside className="w-80 bg-card border-l border-border flex flex-col">
-        <div className="p-4 border-b border-border">
-          <h2 className="text-xl font-bold">Queue</h2>
-          <p className="text-sm text-muted-foreground">
-            {allQueueSongs.length} song{allQueueSongs.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <ScrollArea className="flex-1">
-          <div className="p-4 space-y-3">
-            {allQueueSongs.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Music className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Queue is empty</p>
-              </div>
-            ) : (
-              allQueueSongs.map((item, index) => (
-                <Card
-                  key={item.id}
-                  className={`p-3 flex gap-3 items-center hover-elevate transition-all ${item.status === 'playing' ? 'border-primary border-2' : ''}`}
-                  data-testid={`card-queue-item-${item.id}`}
-                >
-                  <div className={`w-8 h-8 rounded flex items-center justify-center text-sm font-bold ${item.status === 'playing' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                    {item.status === 'playing' ? (
-                      <Music className="w-4 h-4" />
-                    ) : (
-                      index + 1
-                    )}
-                  </div>
-                  <img
-                    src={item.thumbnail}
-                    alt={item.title}
-                    className="w-16 h-12 object-cover rounded"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className="font-medium text-sm truncate"
-                      data-testid={`text-queue-title-${item.id}`}
-                    >
-                      {item.title}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      {item.status === 'playing' && (
-                        <span className="text-xs text-primary font-medium">Now Playing</span>
-                      )}
-                      {item.duration && (
-                        <p className="text-xs text-muted-foreground">
-                          {item.duration}
-                        </p>
+        <div className="border-t border-border bg-card mt-auto">
+          <div className="flex items-center justify-between p-3 border-b border-border">
+            <h2 className="text-lg font-bold">Up Next</h2>
+            <p className="text-sm text-muted-foreground">
+              {allQueueSongs.length} song{allQueueSongs.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+          <ScrollArea className="h-32">
+            <div className="p-3 flex gap-3 overflow-x-auto">
+              {allQueueSongs.length === 0 ? (
+                <div className="flex items-center justify-center w-full py-4 text-muted-foreground">
+                  <Music className="w-6 h-6 mr-2 opacity-50" />
+                  <p>Queue is empty - add songs from your phone</p>
+                </div>
+              ) : (
+                allQueueSongs.map((item, index) => (
+                  <Card
+                    key={item.id}
+                    className={`p-2 flex gap-2 items-center shrink-0 w-72 hover-elevate transition-all ${item.status === 'playing' ? 'border-primary border-2' : ''}`}
+                    data-testid={`card-queue-item-${item.id}`}
+                  >
+                    <div className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold shrink-0 ${item.status === 'playing' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                      {item.status === 'playing' ? (
+                        <Music className="w-3 h-3" />
+                      ) : (
+                        index + 1
                       )}
                     </div>
-                  </div>
-                </Card>
-              ))
-            )}
-          </div>
-        </ScrollArea>
-      </aside>
+                    <img
+                      src={item.thumbnail}
+                      alt={item.title}
+                      className="w-12 h-9 object-cover rounded shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className="font-medium text-sm truncate"
+                        data-testid={`text-queue-title-${item.id}`}
+                      >
+                        {item.title}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        {item.status === 'playing' && (
+                          <span className="text-xs text-primary font-medium">Playing</span>
+                        )}
+                        {item.duration && (
+                          <p className="text-xs text-muted-foreground">
+                            {item.duration}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      </div>
     </div>
   );
 }
