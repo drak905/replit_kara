@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Play, Pause, SkipForward, Music, Users } from "lucide-react";
+import { Play, Pause, SkipForward, Music, Users, Star } from "lucide-react";
 import type { Room, QueueItem } from "@shared/schema";
 
 declare global {
@@ -22,10 +22,13 @@ export default function TVPage() {
   const [currentTitle, setCurrentTitle] = useState<string | null>(null);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [ytReady, setYtReady] = useState(false);
+  const [showScore, setShowScore] = useState(false);
+  const [currentScore, setCurrentScore] = useState(0);
   
   const wsRef = useRef<WebSocket | null>(null);
   const playerRef = useRef<any>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
+  const applauseRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (window.YT && window.YT.Player) {
@@ -77,7 +80,7 @@ export default function TVPage() {
         },
         onStateChange: (event: any) => {
           if (event.data === window.YT.PlayerState.ENDED) {
-            handleSkip();
+            handleVideoEnd();
           }
         },
       },
@@ -177,6 +180,22 @@ export default function TVPage() {
     wsRef.current.send(JSON.stringify({ type: "skip_song" }));
   };
 
+  const handleVideoEnd = () => {
+    const score = Math.floor(Math.random() * 51) + 50;
+    setCurrentScore(score);
+    setShowScore(true);
+    
+    if (applauseRef.current) {
+      applauseRef.current.currentTime = 0;
+      applauseRef.current.play().catch(() => {});
+    }
+    
+    setTimeout(() => {
+      setShowScore(false);
+      handleSkip();
+    }, 4000);
+  };
+
   useEffect(() => {
     return () => {
       wsRef.current?.close();
@@ -211,6 +230,34 @@ export default function TVPage() {
 
   return (
     <div className="dark min-h-screen bg-background text-foreground flex flex-col">
+      <audio
+        ref={applauseRef}
+        src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"
+        preload="auto"
+      />
+      
+      {showScore && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          data-testid="score-overlay"
+        >
+          <div className="text-center animate-in zoom-in-50 duration-500">
+            <div className="flex justify-center gap-2 mb-4">
+              {[...Array(5)].map((_, i) => (
+                <Star 
+                  key={i} 
+                  className={`w-12 h-12 ${currentScore >= 60 + i * 10 ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} 
+                />
+              ))}
+            </div>
+            <p className="text-8xl font-bold text-primary mb-4" data-testid="text-score">
+              {currentScore}
+            </p>
+            <p className="text-3xl text-muted-foreground">Great Performance!</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-4">
           <Music className="w-8 h-8 text-primary" />
