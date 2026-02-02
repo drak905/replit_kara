@@ -450,60 +450,57 @@ export default function MobilePage() {
                 allQueueSongs.map((item, index) => (
                   <Card
                     key={item.id}
-                    className={`p-3 flex gap-3 items-center ${item.status === 'playing' ? 'border-primary border-2' : ''}`}
+                    className={`p-3 ${item.status === 'playing' ? 'border-primary border-2' : ''}`}
                     data-testid={`card-queue-item-${item.id}`}
                   >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${item.status === 'playing' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                      {item.status === 'playing' ? (
-                        <Music className="w-4 h-4" />
-                      ) : (
-                        index + 1
-                      )}
-                    </div>
-                    <img
-                      src={item.thumbnail}
-                      alt={item.title}
-                      className="w-16 h-12 object-cover rounded shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                    <div className="flex gap-2 items-start">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-1 ${item.status === 'playing' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                        {item.status === 'playing' ? (
+                          <Music className="w-3 h-3" />
+                        ) : (
+                          index + 1
+                        )}
+                      </div>
+                      <img
+                        src={item.thumbnail}
+                        alt={item.title}
+                        className="w-12 h-9 object-cover rounded shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
                         <p
-                          className="font-medium text-sm truncate"
+                          className="font-medium text-sm line-clamp-2 leading-tight"
                           data-testid={`text-queue-title-${item.id}`}
                         >
                           {item.title}
                         </p>
-                        {item.status === 'playing' && (
-                          <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded shrink-0">
-                            Now Playing
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {item.status === 'playing' && (
+                            <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
+                              Playing
+                            </span>
+                          )}
+                          {item.duration && (
+                            <span className="text-xs text-muted-foreground">
+                              {item.duration}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      {item.channelTitle && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          {item.channelTitle}
-                        </p>
-                      )}
-                      {item.duration && (
-                        <p className="text-xs text-muted-foreground">
-                          {item.duration}
-                        </p>
-                      )}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleRemoveFromQueue(item.id, item.title)}
+                        disabled={removingItemId === item.id}
+                        data-testid={`button-remove-${item.id}`}
+                        className="shrink-0 text-muted-foreground hover:text-destructive h-8 w-8"
+                      >
+                        {removingItemId === item.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </Button>
                     </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleRemoveFromQueue(item.id, item.title)}
-                      disabled={removingItemId === item.id}
-                      data-testid={`button-remove-${item.id}`}
-                      className="shrink-0 text-muted-foreground hover:text-destructive"
-                    >
-                      {removingItemId === item.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
-                    </Button>
                   </Card>
                 ))
               )}
