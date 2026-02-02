@@ -49,7 +49,20 @@ Preferred communication style: Simple, everyday language.
 
 ### Third-party APIs
 - YouTube IFrame API for video playback on TV interface
-- Web Speech API for voice search on mobile interface
+- YouTube Data API v3 for video search (server-side, requires GOOGLE_API_KEY)
+- Web Speech API for voice search on mobile interface (browser-based)
+
+### Environment Variables
+- `DATABASE_URL` - PostgreSQL connection string
+- `GOOGLE_API_KEY` - YouTube Data API v3 key for video search
+- `SESSION_SECRET` - Session encryption key
+
+### Design Specifications
+- YouTube-inspired color palette: Red primary (#FF0000), Dark grey (#282828)
+- TV interface: Dark mode with black background
+- Mobile interface: Light mode with white background
+- Success notifications: Green (#00C853)
+- Room codes: 6-character uppercase alphanumeric
 
 ### UI Components
 - Radix UI primitives for accessible components
