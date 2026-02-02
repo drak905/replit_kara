@@ -51,7 +51,17 @@ export default function TVPage() {
   }, []);
 
   useEffect(() => {
-    if (!ytReady || !currentVideoId || !playerContainerRef.current) return;
+    if (!ytReady || !playerContainerRef.current) return;
+    
+    if (!currentVideoId) {
+      if (playerRef.current) {
+        try {
+          playerRef.current.destroy();
+        } catch (e) {}
+        playerRef.current = null;
+      }
+      return;
+    }
 
     if (playerRef.current) {
       playerRef.current.loadVideoById(currentVideoId);
