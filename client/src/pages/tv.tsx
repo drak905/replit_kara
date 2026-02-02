@@ -139,9 +139,10 @@ export default function TVPage() {
 
         case "song_added":
           toast({
-            title: "Song Added",
+            title: "Added to Queue",
             description: message.song.title,
             className: "bg-success text-success-foreground border-success",
+            duration: 5000,
           });
           break;
 
