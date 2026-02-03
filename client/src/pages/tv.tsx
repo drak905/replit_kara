@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Play, Pause, SkipForward, Music, Users, Star, Smartphone } from "lucide-react";
-import { Link } from "wouter";
+import { Play, Pause, SkipForward, Music, Users, Star } from "lucide-react";
 import type { Room, QueueItem } from "@shared/schema";
 import { useLanguage } from "@/lib/useLanguage";
 
@@ -381,15 +380,9 @@ export default function TVPage() {
           <div className="text-center p-12">
             <Music className="w-24 h-24 mx-auto mb-6 text-muted-foreground opacity-50" />
             <h2 className="text-3xl font-bold mb-4">{t.noSongsInQueue}</h2>
-            <p className="text-xl text-muted-foreground mb-6">
+            <p className="text-xl text-muted-foreground">
               {t.scanRoomCode}
             </p>
-            <Link href="/mobile">
-              <Button size="lg" className="text-lg px-8" data-testid="button-search-songs">
-                <Smartphone className="w-5 h-5 mr-2" />
-                {t.searchAndSelectSongs}
-              </Button>
-            </Link>
           </div>
         </div>
 
