@@ -5,6 +5,22 @@ import { storage } from "./storage";
 import type { Room, QueueItem, WSMessage } from "@shared/schema";
 import { z } from "zod";
 
+// Round-robin API key rotation for YouTube API
+const apiKeys = [
+  process.env.GOOGLE_API_KEY,
+  process.env.GOOGLE_API_KEY_2,
+  process.env.GOOGLE_API_KEY_3,
+].filter(Boolean) as string[];
+
+let currentKeyIndex = 0;
+
+function getNextApiKey(): string | null {
+  if (apiKeys.length === 0) return null;
+  const key = apiKeys[currentKeyIndex];
+  currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
+  return key;
+}
+
 const addToQueueSchema = z.object({
   videoId: z.string().min(1),
   title: z.string().min(1),
@@ -212,10 +228,12 @@ export async function registerRoutes(
         return res.status(400).json({ error: 'Search query required' });
       }
 
-      const apiKey = process.env.GOOGLE_API_KEY;
+      const apiKey = getNextApiKey();
       if (!apiKey) {
         return res.status(500).json({ error: 'YouTube API key not configured' });
       }
+
+      console.log(`Using YouTube API key index: ${(currentKeyIndex === 0 ? apiKeys.length : currentKeyIndex) - 1} of ${apiKeys.length}`);
 
       const searchQuery = `${query} karaoke`;
       const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=20&q=${encodeURIComponent(searchQuery)}&key=${apiKey}`;
