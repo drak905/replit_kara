@@ -35,6 +35,17 @@ export default function MobilePage() {
 
   const wsRef = useRef<WebSocket | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const autoJoinAttempted = useRef(false);
+
+  // Auto-fill room code from URL query parameter (from QR code scan)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomFromUrl = urlParams.get('room');
+    if (roomFromUrl && roomFromUrl.length === 6 && !autoJoinAttempted.current) {
+      setRoomCode(roomFromUrl.toUpperCase());
+      autoJoinAttempted.current = true;
+    }
+  }, []);
 
   const connectWebSocket = useCallback((code: string) => {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";

@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Play, Pause, SkipForward, Music, Users, Star } from "lucide-react";
+import { Play, Pause, SkipForward, Music, Users, Star, Smartphone } from "lucide-react";
 import type { Room, QueueItem } from "@shared/schema";
 import { useLanguage } from "@/lib/useLanguage";
+import { QRCodeSVG } from "qrcode.react";
 
 declare global {
   interface Window {
@@ -309,14 +310,23 @@ export default function TVPage() {
             {language === 'vi' ? 'VI' : 'EN'}
           </Button>
           <div
-            className="flex items-center gap-3 bg-card px-6 py-3 rounded-lg"
+            className="flex items-center gap-4 bg-card px-4 py-2 rounded-lg"
             data-testid="display-room-code"
           >
-            <Users className="w-6 h-6 text-muted-foreground" />
-            <span className="text-muted-foreground text-lg">{t.join}</span>
-            <span className="text-4xl font-bold tracking-wider text-primary">
-              {room.code}
-            </span>
+            <div className="bg-white p-1.5 rounded-lg" data-testid="qr-code-header">
+              <QRCodeSVG
+                value={`${window.location.origin}/mobile?room=${room.code}`}
+                size={48}
+                level="M"
+                includeMargin={false}
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">{t.scanToJoin}</span>
+              <span className="text-3xl font-bold tracking-wider text-primary">
+                {room.code}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -378,11 +388,23 @@ export default function TVPage() {
           data-testid="display-empty-state"
         >
           <div className="text-center p-12">
-            <Music className="w-24 h-24 mx-auto mb-6 text-muted-foreground opacity-50" />
-            <h2 className="text-3xl font-bold mb-4">{t.noSongsInQueue}</h2>
-            <p className="text-xl text-muted-foreground">
-              {t.scanRoomCode}
+            <div className="bg-white p-6 rounded-2xl inline-block mb-6" data-testid="qr-code-container">
+              <QRCodeSVG
+                value={`${window.location.origin}/mobile?room=${room.code}`}
+                size={200}
+                level="H"
+                includeMargin={false}
+              />
+            </div>
+            <h2 className="text-3xl font-bold mb-2">{t.scanToJoin}</h2>
+            <p className="text-xl text-muted-foreground mb-4">
+              {t.orEnterCode}
             </p>
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-5xl font-bold tracking-wider text-primary">
+                {room.code}
+              </span>
+            </div>
           </div>
         </div>
 

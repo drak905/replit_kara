@@ -52,6 +52,8 @@ export const translations = {
     voiceSearchError: 'Lỗi Tìm Kiếm Giọng Nói',
     couldNotRecognize: 'Không thể nhận dạng giọng nói',
     joinButton: 'Tham gia',
+    scanToJoin: 'Quét để tham gia',
+    orEnterCode: 'hoặc nhập mã',
   },
   en: {
     // TV Page
@@ -104,6 +106,8 @@ export const translations = {
     voiceSearchError: 'Voice Search Error',
     couldNotRecognize: 'Could not recognize speech',
     joinButton: 'Join',
+    scanToJoin: 'Scan to join',
+    orEnterCode: 'or enter code',
   },
 };
 
