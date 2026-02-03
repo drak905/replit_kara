@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Play, Pause, SkipForward, Music, Users, Star, Smartphone } from "lucide-react";
-import type { Room, QueueItem } from "@shared/schema";
+import { Play, Pause, SkipForward, Music, Users, Star, Smartphone, Monitor } from "lucide-react";
+import type { Room, QueueItem, ConnectedDevice } from "@shared/schema";
 import { useLanguage } from "@/lib/useLanguage";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -20,6 +20,7 @@ export default function TVPage() {
   const { language, toggleLanguage, t } = useLanguage();
   const [room, setRoom] = useState<Room | null>(null);
   const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [devices, setDevices] = useState<ConnectedDevice[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
   const [currentTitle, setCurrentTitle] = useState<string | null>(null);
@@ -121,7 +122,7 @@ export default function TVPage() {
     wsRef.current = ws;
 
     ws.onopen = () => {
-      ws.send(JSON.stringify({ type: "join_room", roomCode }));
+      ws.send(JSON.stringify({ type: "join_room", roomCode, deviceName: "TV", deviceType: "tv" }));
     };
 
     ws.onmessage = (event) => {
@@ -131,6 +132,7 @@ export default function TVPage() {
         case "room_state":
           setRoom(message.room);
           setQueue(message.queue);
+          setDevices(message.devices || []);
           setIsPlaying(message.room.isPlaying || false);
           setCurrentVideoId(message.room.currentVideoId);
           setCurrentTitle(message.room.currentVideoTitle);
@@ -156,6 +158,27 @@ export default function TVPage() {
         case "current_song":
           setCurrentVideoId(message.videoId);
           setCurrentTitle(message.title);
+          break;
+
+        case "device_joined":
+          setDevices(prev => [...prev, message.device]);
+          toast({
+            title: `${message.device.name} ${t.deviceJoined}`,
+            className: "bg-success text-success-foreground border-success",
+            duration: 3000,
+          });
+          break;
+
+        case "device_left":
+          setDevices(prev => prev.filter(d => d.id !== message.deviceId));
+          toast({
+            title: `${message.deviceName} ${t.deviceLeft}`,
+            duration: 3000,
+          });
+          break;
+
+        case "devices_updated":
+          setDevices(message.devices);
           break;
       }
     };
@@ -298,6 +321,29 @@ export default function TVPage() {
         <div className="flex items-center gap-4">
           <Music className="w-8 h-8 text-primary" />
           <h1 className="text-2xl font-bold">{t.karaoke}</h1>
+          <div className="flex items-center gap-2 bg-card px-3 py-1.5 rounded-lg" data-testid="display-connected-devices">
+            <Users className="w-5 h-5 text-muted-foreground" />
+            <div className="flex items-center gap-1">
+              {devices.length === 0 ? (
+                <span className="text-sm text-muted-foreground">{t.noDevices}</span>
+              ) : (
+                devices.map((device) => (
+                  <span
+                    key={device.id}
+                    className="flex items-center gap-1 bg-muted px-2 py-0.5 rounded text-sm"
+                    data-testid={`device-${device.id}`}
+                  >
+                    {device.type === 'tv' ? (
+                      <Monitor className="w-3 h-3" />
+                    ) : (
+                      <Smartphone className="w-3 h-3" />
+                    )}
+                    {device.name}
+                  </span>
+                ))
+              )}
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <Button

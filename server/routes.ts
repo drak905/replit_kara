@@ -2,8 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import type { Room, QueueItem, WSMessage } from "@shared/schema";
+import type { Room, QueueItem, WSMessage, ConnectedDevice } from "@shared/schema";
 import { z } from "zod";
+import { randomUUID } from "crypto";
 
 // Round-robin API key rotation for YouTube API
 const apiKeys = [
@@ -38,12 +39,19 @@ function generateRoomCode(): string {
   return code;
 }
 
-interface RoomConnection {
+interface DeviceConnection {
   ws: WebSocket;
-  roomId: string;
+  device: ConnectedDevice;
 }
 
 const roomConnections = new Map<string, Set<WebSocket>>();
+const roomDevices = new Map<string, Map<WebSocket, ConnectedDevice>>();
+
+function getDevicesInRoom(roomId: string): ConnectedDevice[] {
+  const devices = roomDevices.get(roomId);
+  if (!devices) return [];
+  return Array.from(devices.values());
+}
 
 function broadcastToRoom(roomId: string, message: WSMessage, excludeWs?: WebSocket) {
   const connections = roomConnections.get(roomId);
@@ -66,6 +74,7 @@ export async function registerRoutes(
 
   wss.on('connection', (ws: WebSocket) => {
     let currentRoomId: string | null = null;
+    let currentDeviceId: string | null = null;
 
     ws.on('message', async (data) => {
       try {
@@ -80,19 +89,38 @@ export async function registerRoutes(
             }
 
             currentRoomId = room.id;
+            currentDeviceId = randomUUID();
             
             if (!roomConnections.has(room.id)) {
               roomConnections.set(room.id, new Set());
             }
             roomConnections.get(room.id)!.add(ws);
 
+            // Track device
+            const device: ConnectedDevice = {
+              id: currentDeviceId,
+              name: message.deviceName || `Guest ${Math.floor(Math.random() * 1000)}`,
+              type: message.deviceType || 'mobile',
+              joinedAt: new Date().toISOString(),
+            };
+            
+            if (!roomDevices.has(room.id)) {
+              roomDevices.set(room.id, new Map());
+            }
+            roomDevices.get(room.id)!.set(ws, device);
+
             const queue = await storage.getQueueByRoomId(room.id);
+            const devices = getDevicesInRoom(room.id);
             
             ws.send(JSON.stringify({
               type: 'room_state',
               room,
-              queue
+              queue,
+              devices
             }));
+
+            // Broadcast device joined to others
+            broadcastToRoom(room.id, { type: 'device_joined', device }, ws);
             break;
           }
 
@@ -171,11 +199,29 @@ export async function registerRoutes(
 
     ws.on('close', () => {
       if (currentRoomId) {
+        // Get device info before removing
+        const devices = roomDevices.get(currentRoomId);
+        let leftDevice: ConnectedDevice | undefined;
+        if (devices) {
+          leftDevice = devices.get(ws);
+          devices.delete(ws);
+          if (devices.size === 0) {
+            roomDevices.delete(currentRoomId);
+          }
+        }
+
         const connections = roomConnections.get(currentRoomId);
         if (connections) {
           connections.delete(ws);
           if (connections.size === 0) {
             roomConnections.delete(currentRoomId);
+          } else if (leftDevice) {
+            // Broadcast device left to remaining connections
+            broadcastToRoom(currentRoomId, { 
+              type: 'device_left', 
+              deviceId: leftDevice.id,
+              deviceName: leftDevice.name
+            });
           }
         }
       }

@@ -54,6 +54,12 @@ export const translations = {
     joinButton: 'Tham gia',
     scanToJoin: 'Quét để tham gia',
     orEnterCode: 'hoặc nhập mã',
+    connectedDevices: 'Thiết bị đã kết nối',
+    deviceJoined: 'đã tham gia',
+    deviceLeft: 'đã rời phòng',
+    noDevices: 'Chưa có thiết bị nào kết nối',
+    tv: 'TV',
+    mobile: 'Điện thoại',
   },
   en: {
     // TV Page
@@ -108,6 +114,12 @@ export const translations = {
     joinButton: 'Join',
     scanToJoin: 'Scan to join',
     orEnterCode: 'or enter code',
+    connectedDevices: 'Connected Devices',
+    deviceJoined: 'joined',
+    deviceLeft: 'left the room',
+    noDevices: 'No devices connected',
+    tv: 'TV',
+    mobile: 'Mobile',
   },
 };
 

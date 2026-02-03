@@ -62,9 +62,18 @@ export const videoSearchResultSchema = z.object({
 
 export type VideoSearchResult = z.infer<typeof videoSearchResultSchema>;
 
+export const connectedDeviceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.enum(["tv", "mobile"]),
+  joinedAt: z.string(),
+});
+
+export type ConnectedDevice = z.infer<typeof connectedDeviceSchema>;
+
 export const wsMessageSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("join_room"), roomCode: z.string() }),
-  z.object({ type: z.literal("room_state"), room: z.any(), queue: z.array(z.any()) }),
+  z.object({ type: z.literal("join_room"), roomCode: z.string(), deviceName: z.string().optional(), deviceType: z.enum(["tv", "mobile"]).optional() }),
+  z.object({ type: z.literal("room_state"), room: z.any(), queue: z.array(z.any()), devices: z.array(connectedDeviceSchema).optional() }),
   z.object({ type: z.literal("queue_updated"), queue: z.array(z.any()) }),
   z.object({ type: z.literal("song_added"), song: z.any() }),
   z.object({ type: z.literal("song_removed"), songId: z.string() }),
@@ -75,6 +84,9 @@ export const wsMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("play") }),
   z.object({ type: z.literal("pause") }),
   z.object({ type: z.literal("error"), message: z.string() }),
+  z.object({ type: z.literal("devices_updated"), devices: z.array(connectedDeviceSchema) }),
+  z.object({ type: z.literal("device_joined"), device: connectedDeviceSchema }),
+  z.object({ type: z.literal("device_left"), deviceId: z.string(), deviceName: z.string() }),
 ]);
 
 export type WSMessage = z.infer<typeof wsMessageSchema>;

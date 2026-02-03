@@ -53,7 +53,8 @@ export default function MobilePage() {
     wsRef.current = ws;
 
     ws.onopen = () => {
-      ws.send(JSON.stringify({ type: "join_room", roomCode: code }));
+      const guestName = `Guest ${Math.floor(Math.random() * 1000)}`;
+      ws.send(JSON.stringify({ type: "join_room", roomCode: code, deviceName: guestName, deviceType: "mobile" }));
     };
 
     ws.onmessage = (event) => {
