@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Search, Mic, Plus, Music, ListMusic, Loader2, Trash2 } from "lucide-react";
 import type { Room, QueueItem, VideoSearchResult } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import { useLanguage } from "@/lib/useLanguage";
 
 declare global {
   interface Window {
@@ -19,6 +20,7 @@ declare global {
 
 export default function MobilePage() {
   const { toast } = useToast();
+  const { language, toggleLanguage, t } = useLanguage();
   const [roomCode, setRoomCode] = useState("");
   const [room, setRoom] = useState<Room | null>(null);
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -58,7 +60,7 @@ export default function MobilePage() {
 
         case "song_added":
           toast({
-            title: "Song Added",
+            title: t.songAdded,
             description: message.song.title,
             className: "bg-success text-success-foreground border-success",
           });
@@ -66,7 +68,7 @@ export default function MobilePage() {
 
         case "error":
           toast({
-            title: "Error",
+            title: t.error,
             description: message.message,
             variant: "destructive",
           });
@@ -88,8 +90,8 @@ export default function MobilePage() {
   const handleJoinRoom = async () => {
     if (roomCode.length !== 6) {
       toast({
-        title: "Invalid Code",
-        description: "Please enter a 6-character room code",
+        title: t.invalidCode,
+        description: t.enterSixCharCode,
         variant: "destructive",
       });
       return;
@@ -107,8 +109,8 @@ export default function MobilePage() {
       connectWebSocket(roomCode.toUpperCase());
     } catch (error) {
       toast({
-        title: "Room Not Found",
-        description: "Could not find a room with that code",
+        title: t.roomNotFound,
+        description: t.couldNotFindRoom,
         variant: "destructive",
       });
     } finally {
@@ -126,8 +128,8 @@ export default function MobilePage() {
       setSearchResults(results);
     } catch (error) {
       toast({
-        title: "Search Failed",
-        description: "Could not search for songs",
+        title: t.searchFailed,
+        description: t.couldNotSearch,
         variant: "destructive",
       });
     } finally {
@@ -148,14 +150,14 @@ export default function MobilePage() {
         duration: video.duration,
       });
       toast({
-        title: "Added to Queue",
+        title: t.addedToQueue,
         description: video.title,
         className: "bg-success text-success-foreground border-success",
       });
     } catch (error) {
       toast({
-        title: "Failed to Add",
-        description: "Could not add song to queue",
+        title: t.failedToAdd,
+        description: t.couldNotAdd,
         variant: "destructive",
       });
     } finally {
@@ -170,13 +172,13 @@ export default function MobilePage() {
     try {
       await apiRequest("DELETE", `/api/rooms/${room.code}/queue/${itemId}`);
       toast({
-        title: "Removed from Queue",
+        title: t.removedFromQueue,
         description: title,
       });
     } catch (error) {
       toast({
-        title: "Failed to Remove",
-        description: "Could not remove song from queue",
+        title: t.failedToRemove,
+        description: t.couldNotRemove,
         variant: "destructive",
       });
     } finally {
@@ -189,8 +191,8 @@ export default function MobilePage() {
     
     if (!SpeechRecognition) {
       toast({
-        title: "Not Supported",
-        description: "Voice search is not supported in this browser",
+        title: t.notSupported,
+        description: t.voiceNotSupported,
         variant: "destructive",
       });
       return;
@@ -205,7 +207,7 @@ export default function MobilePage() {
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = "en-US";
+    recognition.lang = language === 'vi' ? "vi-VN" : "en-US";
 
     recognition.onstart = () => {
       setIsListening(true);
@@ -225,8 +227,8 @@ export default function MobilePage() {
       setIsListening(false);
       recognitionRef.current = null;
       toast({
-        title: "Voice Search Error",
-        description: "Could not recognize speech",
+        title: t.voiceSearchError,
+        description: t.couldNotRecognize,
         variant: "destructive",
       });
     };
@@ -250,8 +252,8 @@ export default function MobilePage() {
       setSearchResults(results);
     } catch (error) {
       toast({
-        title: "Search Failed",
-        description: "Could not search for songs",
+        title: t.searchFailed,
+        description: t.couldNotSearch,
         variant: "destructive",
       });
     } finally {
@@ -272,11 +274,20 @@ export default function MobilePage() {
   if (!room) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 safe-area-inset">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleLanguage}
+          className="absolute top-4 right-4 font-bold"
+          data-testid="button-language-toggle"
+        >
+          {language === 'vi' ? 'VI' : 'EN'}
+        </Button>
         <Card className="w-full max-w-sm p-6 text-center">
           <Music className="w-16 h-16 mx-auto mb-6 text-primary" />
-          <h1 className="text-2xl font-bold mb-2">Join Karaoke</h1>
+          <h1 className="text-2xl font-bold mb-2">{t.joinKaraoke}</h1>
           <p className="text-muted-foreground mb-6">
-            Enter the room code shown on the TV
+            {t.enterRoomCode}
           </p>
           <div className="space-y-4">
             <Input
@@ -297,10 +308,10 @@ export default function MobilePage() {
               {isJoining ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  Joining...
+                  {t.joining}
                 </>
               ) : (
-                "Join"
+                t.joinButton
               )}
             </Button>
           </div>
@@ -315,13 +326,24 @@ export default function MobilePage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Music className="w-6 h-6 text-primary" />
-            <span className="font-bold">Karaoke</span>
+            <span className="font-bold">{t.karaoke}</span>
           </div>
-          <div className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-lg">
-            <span className="text-sm text-muted-foreground">Room:</span>
-            <span className="font-bold text-primary" data-testid="text-room-code">
-              {room.code}
-            </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleLanguage}
+              className="font-bold"
+              data-testid="button-language-toggle"
+            >
+              {language === 'vi' ? 'VI' : 'EN'}
+            </Button>
+            <div className="flex items-center gap-2 bg-muted px-3 py-1.5 rounded-lg">
+              <span className="text-sm text-muted-foreground">{t.room}</span>
+              <span className="font-bold text-primary" data-testid="text-room-code">
+                {room.code}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -330,7 +352,7 @@ export default function MobilePage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search for songs..."
+              placeholder={t.searchForSongs}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -353,7 +375,7 @@ export default function MobilePage() {
             className="h-11 shrink-0"
             data-testid="button-search"
           >
-            {isSearching ? <Loader2 className="w-5 h-5 animate-spin" /> : "Search"}
+            {isSearching ? <Loader2 className="w-5 h-5 animate-spin" /> : t.search}
           </Button>
         </div>
       </header>
@@ -362,11 +384,11 @@ export default function MobilePage() {
         <TabsList className="mx-4 mt-3 grid w-auto grid-cols-2">
           <TabsTrigger value="search" data-testid="tab-search">
             <Search className="w-4 h-4 mr-2" />
-            Search
+            {t.searchTab}
           </TabsTrigger>
           <TabsTrigger value="queue" data-testid="tab-queue">
             <ListMusic className="w-4 h-4 mr-2" />
-            Queue ({allQueueSongs.length})
+            {t.queue} ({allQueueSongs.length})
           </TabsTrigger>
         </TabsList>
 
@@ -387,7 +409,7 @@ export default function MobilePage() {
               ) : searchResults.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>Search for songs to add to the queue</p>
+                  <p>{t.searchToAddSongs}</p>
                 </div>
               ) : (
                 searchResults.map((video) => (
@@ -443,8 +465,8 @@ export default function MobilePage() {
               {allQueueSongs.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <ListMusic className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No songs in queue</p>
-                  <p className="text-sm mt-1">Search and add songs to get started</p>
+                  <p>{t.noSongsQueue}</p>
+                  <p className="text-sm mt-1">{t.searchAddToStart}</p>
                 </div>
               ) : (
                 allQueueSongs.map((item, index) => (
@@ -476,7 +498,7 @@ export default function MobilePage() {
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           {item.status === 'playing' && (
                             <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
-                              Playing
+                              {t.playing}
                             </span>
                           )}
                           {item.duration && (

@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Play, Pause, SkipForward, Music, Users, Star } from "lucide-react";
 import type { Room, QueueItem } from "@shared/schema";
+import { useLanguage } from "@/lib/useLanguage";
 
 declare global {
   interface Window {
@@ -15,6 +16,7 @@ declare global {
 
 export default function TVPage() {
   const { toast } = useToast();
+  const { language, toggleLanguage, t } = useLanguage();
   const [room, setRoom] = useState<Room | null>(null);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -139,7 +141,7 @@ export default function TVPage() {
 
         case "song_added":
           toast({
-            title: "Added to Queue",
+            title: t.addedToQueue,
             description: message.song.title,
             className: "bg-success text-success-foreground border-success",
             duration: 5000,
@@ -177,8 +179,8 @@ export default function TVPage() {
       connectWebSocket(newRoom.code);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to create room",
+        title: t.error,
+        description: t.failedToCreateRoom,
         variant: "destructive",
       });
     } finally {
@@ -232,11 +234,20 @@ export default function TVPage() {
   if (!room) {
     return (
       <div className="dark min-h-screen bg-black flex items-center justify-center">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleLanguage}
+          className="absolute top-4 right-4 font-bold"
+          data-testid="button-language-toggle"
+        >
+          {language === 'vi' ? 'VI' : 'EN'}
+        </Button>
         <Card className="p-8 max-w-md w-full mx-4 text-center">
           <Music className="w-16 h-16 mx-auto mb-6 text-primary" />
-          <h1 className="text-3xl font-bold mb-4">Karaoke TV</h1>
+          <h1 className="text-3xl font-bold mb-4">{t.karaokeTV}</h1>
           <p className="text-muted-foreground mb-8 text-lg">
-            Create a room to start your karaoke session
+            {t.createRoomDescription}
           </p>
           <Button
             size="lg"
@@ -245,7 +256,7 @@ export default function TVPage() {
             data-testid="button-create-room"
             className="w-full text-lg py-6"
           >
-            {isCreatingRoom ? "Creating..." : "Create Room"}
+            {isCreatingRoom ? t.creating : t.createRoom}
           </Button>
         </Card>
       </div>
@@ -277,7 +288,7 @@ export default function TVPage() {
             <p className="text-8xl font-bold text-primary mb-4" data-testid="text-score">
               {currentScore}
             </p>
-            <p className="text-3xl text-muted-foreground">Great Performance!</p>
+            <p className="text-3xl text-muted-foreground">{t.greatPerformance}</p>
           </div>
         </div>
       )}
@@ -285,17 +296,28 @@ export default function TVPage() {
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-4">
           <Music className="w-8 h-8 text-primary" />
-          <h1 className="text-2xl font-bold">Karaoke</h1>
+          <h1 className="text-2xl font-bold">{t.karaoke}</h1>
         </div>
-        <div
-          className="flex items-center gap-3 bg-card px-6 py-3 rounded-lg"
-          data-testid="display-room-code"
-        >
-          <Users className="w-6 h-6 text-muted-foreground" />
-          <span className="text-muted-foreground text-lg">Join:</span>
-          <span className="text-4xl font-bold tracking-wider text-primary">
-            {room.code}
-          </span>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleLanguage}
+            className="font-bold"
+            data-testid="button-language-toggle"
+          >
+            {language === 'vi' ? 'VI' : 'EN'}
+          </Button>
+          <div
+            className="flex items-center gap-3 bg-card px-6 py-3 rounded-lg"
+            data-testid="display-room-code"
+          >
+            <Users className="w-6 h-6 text-muted-foreground" />
+            <span className="text-muted-foreground text-lg">{t.join}</span>
+            <span className="text-4xl font-bold tracking-wider text-primary">
+              {room.code}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -322,9 +344,9 @@ export default function TVPage() {
                 className="text-lg font-medium truncate"
                 data-testid="text-current-song"
               >
-                {currentTitle || "Unknown Song"}
+                {currentTitle || t.unknownSong}
               </p>
-              <p className="text-sm text-muted-foreground">Now Playing</p>
+              <p className="text-sm text-muted-foreground">{t.nowPlaying}</p>
             </div>
             <div className="flex items-center gap-3">
               <Button
@@ -357,18 +379,18 @@ export default function TVPage() {
         >
           <div className="text-center p-12">
             <Music className="w-24 h-24 mx-auto mb-6 text-muted-foreground opacity-50" />
-            <h2 className="text-3xl font-bold mb-4">No Songs in Queue</h2>
+            <h2 className="text-3xl font-bold mb-4">{t.noSongsInQueue}</h2>
             <p className="text-xl text-muted-foreground">
-              Scan the room code with your phone to add songs
+              {t.scanRoomCode}
             </p>
           </div>
         </div>
 
         <div className="border-t border-border bg-card mt-auto">
           <div className="flex items-center justify-between p-3 border-b border-border">
-            <h2 className="text-lg font-bold">Up Next</h2>
+            <h2 className="text-lg font-bold">{t.upNext}</h2>
             <p className="text-sm text-muted-foreground">
-              {allQueueSongs.length} song{allQueueSongs.length !== 1 ? "s" : ""}
+              {allQueueSongs.length} {allQueueSongs.length !== 1 ? t.songs : t.song}
             </p>
           </div>
           <ScrollArea className="h-32">
@@ -376,7 +398,7 @@ export default function TVPage() {
               {allQueueSongs.length === 0 ? (
                 <div className="flex items-center justify-center w-full py-4 text-muted-foreground">
                   <Music className="w-6 h-6 mr-2 opacity-50" />
-                  <p>Queue is empty - add songs from your phone</p>
+                  <p>{t.queueEmpty}</p>
                 </div>
               ) : (
                 allQueueSongs.map((item, index) => (
@@ -406,7 +428,7 @@ export default function TVPage() {
                       </p>
                       <div className="flex items-center gap-2">
                         {item.status === 'playing' && (
-                          <span className="text-xs text-primary font-medium">Playing</span>
+                          <span className="text-xs text-primary font-medium">{t.playing}</span>
                         )}
                         {item.duration && (
                           <p className="text-xs text-muted-foreground">
