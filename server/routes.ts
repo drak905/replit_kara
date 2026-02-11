@@ -228,6 +228,11 @@ export async function registerRoutes(
     });
   });
 
+  // Health check endpoint for Railway
+  app.get('/api/health', (_req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   app.post('/api/rooms', async (req, res) => {
     try {
       let code = generateRoomCode();
